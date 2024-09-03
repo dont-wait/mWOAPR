@@ -13,3 +13,5 @@ def plot_results(num_iterations, best_fitness):
     plt.tight_layout()
     plt.show()
     input("Press Enter to exit...")
+
+# def plot_diversity

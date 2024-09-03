@@ -4,11 +4,11 @@ from objectiveFunction import get_info
 from initialize import init
 from plot import plot_results
 
-class E_WOA:
+class mWOAPR:
     def __init__(self, pop_size, function_name, max_iterater):
         self.pop_size = pop_size
         self.function_name = function_name
-        self.max_iter = max_iterater
+        self.max_iterater = max_iterater
     
     #Tính toán fitness
     def calculate_fitness(solutions, fitness_function):
@@ -37,7 +37,7 @@ class E_WOA:
         return 2 * rand
     
     def Encircling(best_sol, sol, A, dim):
-        C = E_WOA.calculate_C(dim)
+        C = mWOAPR.calculate_C(dim)
         D = np.abs(np.multiply(C, best_sol) - sol)
         return best_sol - np.multiply(A, D)
         
@@ -47,7 +47,7 @@ class E_WOA:
 
     #Hành động tìm kiếm dựa trên con ngẫu nhiên trong đàn
     def Searching(rand_sol, sol, A, dim):
-        C = E_WOA.calculate_C(dim)
+        C = mWOAPR.calculate_C(dim)
         D = np.abs(np.multiply(C, rand_sol) - sol)
         return rand_sol - np.multiply(A, D)
     
@@ -60,44 +60,60 @@ class E_WOA:
     
     #Cập nhật fitness của mỗi solutions sau mỗi lần lặp
     def update_fitness(solutions, fitness_func, fitness, best_sol):
-        fitness_list = E_WOA.calculate_fitness(solutions, fitness_func)
-        best_sol_t, fitness_t = E_WOA.get_best_solution(solutions, fitness_list)
+        fitness_list = mWOAPR.calculate_fitness(solutions, fitness_func)
+        best_sol_t, fitness_t = mWOAPR.get_best_solution(solutions, fitness_list)
         if fitness_t < fitness:
             return fitness_t, best_sol_t
         return fitness, best_sol  
     
-    def e_woa_handle(function_name, pop_size, max_iterater):
+    def calculate_b(iter, max_iterater):
+        return -1 + 2 * (iter / max_iterater)
+    def calculate_a1(iter, max_iterater):
+        return 2 * (1 - iter / max_iterater)
+    def calculate_a2(iter, max_iterater):
+        return -1 - (1 / max_iterater * iter)
+    def calculate_belta(iter, max_iterater):
+        return 1 - iter/ max_iterater
+    
+    def mWOAPR_handle(self):
         # Lấy dữ liệu hàm test
-        fitness_func, ub, lb, dim = get_info(function_name)
+        fitness_func, ub, lb, dim = get_info(self.function_name)
         # Khởi tạo quần thể
-        solutions = init.iniliazation(pop_size, dim, lb, ub)
+        solutions = init.initialization(self.pop_size, dim, lb, ub)
         # Tạo mảng chứa các giải pháp tốt nhất
         best_solution = []; fitness = np.inf
         best_fitness = []
         
         iter = 0
-        while iter < max_iterater: 
-            fitness, best_solution = E_WOA.update_fitness(solutions, fitness_func, fitness, best_solution)
+        while iter < self.max_iterater: 
+            fitness, best_solution = mWOAPR.update_fitness(solutions, fitness_func, fitness, best_solution)
             best_fitness.append(fitness)
-            a1 = 2*(1 - iter / max_iterater) # a1[2, 0] 
-            a2 = -1 - (1 / max_iterater * iter) # a2[-1 -2]
-            belta = 1 - iter/max_iterater #belta thay cho 1 
+            a1 = mWOAPR.calculate_a1(iter, self.max_iterater) # a1[2, 0] 
+            a2 = mWOAPR.calculate_a2(iter, self.max_iterater) # a2[-1 -2]
+            belta = mWOAPR.calculate_belta(iter, self.max_iterater) #belta thay cho 1 [1 0] 
+            print(f"a2: {a2}")
             i = 0
             new_solutions = np.zeros_like(solutions)
             for solution in solutions:
                 p = np.random.uniform(0, 1)
                 if p < 0.5:
-                    A = E_WOA.calculate_A(a1, dim)
+                    A = mWOAPR.calculate_A(a1, dim)
                     if np.linalg.norm(A) < belta:
-                        new_solutions[i, :] = E_WOA.Encircling(best_solution, solution, A, dim)
+                        new_solutions[i, :] = mWOAPR.Encircling(best_solution, solution, A, dim)
                     else:
-                        random_solution = E_WOA.rand_solution(solutions, pop_size)
-                        new_solutions[i, :] = E_WOA.Searching(random_solution, solution, A, dim)
+                        random_solution = mWOAPR.rand_solution(solutions, self.pop_size)
+                        new_solutions[i, :] = mWOAPR.Searching(random_solution, solution, A, dim)
+                        # Lọc ra một nửa giải pháp tốt nhất và kết hợp với các giải pháp còn lại
+                        #Lấy ra một nửa giải pháp tốt nhất
+                        # new_solutions = np.concatenate((
+                        #                     mWOAPR.divide_half_solutions(solutions, fitness),
+                        #                     init.initialization((pop_size // 2) - 1, dim, lb, ub)
+                        # ), axis=0)
                 else:
-                    new_solutions[i, :] = E_WOA.Attacking(best_solution, solution, dim, a2)
+                    new_solutions[i, :] = mWOAPR.Attacking(best_solution, solution, dim, a2)
                 i += 1
             solutions = new_solutions
-            E_WOA.reset_constant(solutions, lb, ub)
+            mWOAPR.reset_constant(solutions, lb, ub)
             iter += 1
-        plot_results(max_iterater, best_fitness)
+        plot_results(self.max_iterater, best_fitness)
         return best_solution, fitness    
