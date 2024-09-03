@@ -95,8 +95,8 @@ class mWOAPR:
         
         iter = 0
         while iter < self.max_iterater: 
-            #print(f"giá trị tốt nhất hiện tại: {fitness}")
-            print(f"Tổng giải pháp còn lại: {len(solutions)}")
+            # print(f"giá trị tốt nhất hiện tại: {fitness}")
+            # print(f"Tổng giải pháp còn lại: {len(solutions)}")
             fitness, best_solution = mWOAPR.update_fitness(self, solutions, fitness_func, fitness, best_solution)
             #plot_solutions_update(solutions, best_solution, fitness, lb, ub, iter)
             best_fitness.append(fitness)
